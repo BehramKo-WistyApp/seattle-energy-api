@@ -1,0 +1,21 @@
+service: "service_complete:EnergyPredictionService"
+labels:
+  owner: data-engineering-team
+  project: seattle-energy-prediction
+description: "API de prédiction de consommation énergétique - Seattle"
+
+python:
+  packages:
+    - numpy
+    - pandas
+    - scikit-learn
+    - xgboost
+    - pydantic
+  lock_packages: false
+
+docker:
+  distro: debian
+  python_version: "3.11"
+
+include:
+  - "service_complete.py"
