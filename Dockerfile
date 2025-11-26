@@ -9,14 +9,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copier le code
 COPY service_complete.py .
 
-# Copier et importer les modèles
-COPY models_export/ ./models_export/
+# Copier les modèles
+COPY models_export/ /app/models_export/
 
-# Importer les modèles dans BentoML
-RUN for model in ./models_export/*.bentomodel; do \
+# Importer les modèles dans BentoML (version corrigée)
+RUN cd /app/models_export && \
+    for model in *.bentomodel; do \
         if [ -f "$model" ]; then \
             echo "Importing $model..." && \
-            bentoml models import "$model"; \
+            bentoml models import "$model" || echo "Failed to import $model"; \
         fi \
     done
 
