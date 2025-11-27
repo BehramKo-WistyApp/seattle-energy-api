@@ -1,8 +1,9 @@
+
 service: "service_complete:EnergyPredictionService"
 labels:
   owner: data-engineering-team
   project: seattle-energy-prediction
-description: "API de prédiction de consommation énergétique - Seattle"
+description: "API de prédiction de consommation énergétique des bâtiments de Seattle"
 
 python:
   packages:
@@ -19,3 +20,8 @@ docker:
 
 include:
   - "service_complete.py"
+
+exclude:
+  - "*.ipynb"
+  - "__pycache__/"
+  - "*.pyc"
