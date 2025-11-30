@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seattle Energy Prediction API - Demo Interactive</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .card h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #34495e;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .btn-predict {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-predict:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-predict:active {
+            transform: translateY(0);
+        }
+
+        .btn-predict:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .examples {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-example {
+            flex: 1;
+            padding: 10px;
+            background: #ecf0f1;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+
+        .btn-example:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        #result {
+            display: none;
+        }
+
+        .result-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .result-header h3 {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+
+        .result-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .result-subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 5px solid #667eea;
+        }
+
+        .info-box h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #7f8c8d;
+            font-weight: 600;
+        }
+
+        .info-value {
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #e74c3c;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .badge-success {
+            background: #2ecc71;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #f39c12;
+            color: white;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            opacity: 0.8;
+        }
+
+        .api-info {
+            background: #34495e;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏢 Seattle Energy Prediction</h1>
+        <p>Prédiction de consommation énergétique en temps réel</p>
+    </div>
+
+    <div class="container">
+        <!-- Formulaire -->
+        <div class="card">
+            <h2>📝 Caractéristiques du Bâtiment</h2>
+            
+            <form id="predictionForm">
+                <div class="form-group">
+                    <label>Surface Totale (sq ft) *</label>
+                    <input type="number" id="surface" value="50000" min="10000" max="10000000" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombre d'Étages *</label>
+                        <input type="number" id="floors" value="5" min="1" max="100" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Année de Construction *</label>
+                        <input type="number" id="year" value="1990" min="1900" max="2024" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Type de Bâtiment *</label>
+                    <select id="buildingType" required>
+                        <option value="Office">Bureau (Office)</option>
+                        <option value="Hotel">Hôtel</option>
+                        <option value="Hospital">Hôpital</option>
+                        <option value="Retail Store">Commerce</option>
+                        <option value="Warehouse">Entrepôt</option>
+                        <option value="K-12 School">École</option>
+                        <option value="Restaurant">Restaurant</option>
+                        <option value="Medical Office">Cabinet Médical</option>
+                        <option value="Large Office">Grand Bureau</option>
+                        <option value="Small- and Mid-Sized Office">Petit/Moyen Bureau</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Quartier *</label>
+                    <select id="neighborhood" required>
+                        <option value="DOWNTOWN">Downtown</option>
+                        <option value="BALLARD">Ballard</option>
+                        <option value="LAKE UNION">Lake Union</option>
+                        <option value="NORTHEAST">Northeast</option>
+                        <option value="MAGNOLIA / QUEEN ANNE">Magnolia / Queen Anne</option>
+                        <option value="GREATER DUWAMISH">Greater Duwamish</option>
+                        <option value="NORTHWEST">Northwest</option>
+                        <option value="NORTH">North</option>
+                        <option value="CENTRAL">Central</option>
+                        <option value="EAST">East</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Surface Parking (sq ft)</label>
+                        <input type="number" id="parking" value="5000" min="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Score ENERGY STAR</label>
+                        <input type="number" id="energyStar" placeholder="Optionnel" min="0" max="100">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-predict" id="predictBtn">
+                    🔮 Prédire la Consommation
+                </button>
+            </form>
+
+            <div class="examples">
+                <button class="btn-example" onclick="loadExample('office')">
+                    🏢 Bureau
+                </button>
+                <button class="btn-example" onclick="loadExample('hospital')">
+                    🏥 Hôpital
+                </button>
+                <button class="btn-example" onclick="loadExample('warehouse')">
+                    📦 Entrepôt
+                </button>
+            </div>
+
+            <div class="api-info">
+                <strong>API Endpoint:</strong><br>
+                https://seattle-energy-api.onrender.com/predict
+            </div>
+        </div>
+
+        <!-- Résultats -->
+        <div class="card" id="resultCard">
+            <h2>📊 Résultats de la Prédiction</h2>
+            
+            <div id="loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Prédiction en cours...</p>
+                <small>Premier appel peut prendre 30-60 secondes (cold start)</small>
+            </div>
+
+            <div id="result"></div>
+
+            <div id="placeholder" style="text-align: center; padding: 60px 20px; color: #95a5a6;">
+                <div style="font-size: 4em; margin-bottom: 20px;">📈</div>
+                <p style="font-size: 1.2em;">Remplissez le formulaire et cliquez sur<br>"Prédire" pour voir les résultats</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Projet Data Engineering - OpenClassrooms 2025</p>
+        <p>Modèle XGBoost • R² = 0.677 • Déployé sur Render.com</p>
+    </div>
+
+    <script>
+        const API_URL = 'https://corsproxy.io/?https://seattle-energy-api.onrender.com/predict';
+
+        const neighborhoods = {
+            'DOWNTOWN': { lat: 47.6062, lon: -122.3321 },
+            'BALLARD': { lat: 47.6694, lon: -122.3844 },
+            'LAKE UNION': { lat: 47.6394, lon: -122.3344 },
+            'NORTHEAST': { lat: 47.6750, lon: -122.3150 },
+            'MAGNOLIA / QUEEN ANNE': { lat: 47.6400, lon: -122.3700 },
+            'GREATER DUWAMISH': { lat: 47.5400, lon: -122.3300 },
+            'NORTHWEST': { lat: 47.6800, lon: -122.3600 },
+            'NORTH': { lat: 47.7000, lon: -122.3300 },
+            'CENTRAL': { lat: 47.6100, lon: -122.3200 },
+            'EAST': { lat: 47.6200, lon: -122.3000 }
+        };
+
+        function loadExample(type) {
+            const examples = {
+                office: {
+                    surface: 30000,
+                    floors: 3,
+                    year: 2010,
+                    type: 'Office',
+                    neighborhood: 'DOWNTOWN',
+                    parking: 3000,
+                    energyStar: 80
+                },
+                hospital: {
+                    surface: 200000,
+                    floors: 8,
+                    year: 1985,
+                    type: 'Hospital',
+                    neighborhood: 'NORTHEAST',
+                    parking: 20000,
+                    energyStar: null
+                },
+                warehouse: {
+                    surface: 100000,
+                    floors: 1,
+                    year: 1970,
+                    type: 'Warehouse',
+                    neighborhood: 'GREATER DUWAMISH',
+                    parking: 5000,
+                    energyStar: null
+                }
+            };
+
+            const ex = examples[type];
+            document.getElementById('surface').value = ex.surface;
+            document.getElementById('floors').value = ex.floors;
+            document.getElementById('year').value = ex.year;
+            document.getElementById('buildingType').value = ex.type;
+            document.getElementById('neighborhood').value = ex.neighborhood;
+            document.getElementById('parking').value = ex.parking;
+            document.getElementById('energyStar').value = ex.energyStar || '';
+        }
+
+        document.getElementById('predictionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const neighborhood = document.getElementById('neighborhood').value;
+            const coords = neighborhoods[neighborhood];
+            
+            const energyStarValue = document.getElementById('energyStar').value;
+            
+            const data = {
+                input_data: {
+                    PropertyGFATotal: parseFloat(document.getElementById('surface').value),
+                    NumberofFloors: parseInt(document.getElementById('floors').value),
+                    YearBuilt: parseInt(document.getElementById('year').value),
+                    PrimaryPropertyType: document.getElementById('buildingType').value,
+                    Neighborhood: neighborhood,
+                    Latitude: coords.lat,
+                    Longitude: coords.lon,
+                    PropertyGFAParking: parseFloat(document.getElementById('parking').value) || 0,
+                    NumberofBuildings: 1,
+                    ENERGYSTARScore: energyStarValue ? parseFloat(energyStarValue) : null
+                }
+            };
+
+            // Afficher le loading
+            document.getElementById('placeholder').style.display = 'none';
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('predictBtn').disabled = true;
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                displayResult(result);
+
+            } catch (error) {
+                displayError(error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('predictBtn').disabled = false;
+            }
+        });
+
+        function displayResult(result) {
+            const pred = result.prediction;
+            const info = result.building_info;
+            const perf = result.model_performance;
+
+            const html = `
+                <div class="result-header">
+                    <h3>✅ Prédiction Réussie</h3>
+                    <div class="result-value">${pred.consumption_kbtu.toLocaleString('fr-FR', {maximumFractionDigits: 0})} kBtu/an</div>
+                    <div class="result-subtitle">
+                        ⚡ ${pred.consumption_mwh.toLocaleString('fr-FR', {maximumFractionDigits: 1})} MWh/an • 
+                        💡 ${pred.consumption_kwh.toLocaleString('fr-FR', {maximumFractionDigits: 0})} kWh/an
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <h4>🏢 Caractéristiques du Bâtiment</h4>
+                    <div class="info-item">
+                        <span class="info-label">🕐 Âge</span>
+                        <span class="info-value">${info.age_years} ans (${info.age_category})</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">📍 Localisation</span>
+                        <span class="info-value">${info.location_zone} (${info.distance_to_center_km} km du centre)</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">🅿️ Parking</span>
+                        <span class="info-value">${info.has_parking ? '✅ Oui' : '❌ Non'}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">⭐ ENERGY STAR</span>
+                        <span class="info-value">
+                            ${info.has_energy_star ? 
+                                '<span class="badge badge-success">✅ Certifié</span>' : 
+                                '<span class="badge badge-warning">❌ Non certifié</span>'}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <h4>📊 Performance du Modèle</h4>
+                    <div class="info-item">
+                        <span class="info-label">R² Score</span>
+                        <span class="info-value">${(perf.r2_score * 100).toFixed(1)}%</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Erreur Moyenne (MAE)</span>
+                        <span class="info-value">±${(perf.mae_kbtu / 1000000).toFixed(2)}M kBtu</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Variance Expliquée</span>
+                        <span class="info-value">${(perf.r2_score * 100).toFixed(1)}%</span>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('result').innerHTML = html;
+            document.getElementById('result').style.display = 'block';
+        }
+
+        function displayError(message) {
+            const html = `
+                <div class="error">
+                    <h3>❌ Erreur</h3>
+                    <p>${message}</p>
+                    <small>Vérifiez que l'API est bien démarrée sur Render.com</small>
+                </div>
+            `;
+            document.getElementById('result').innerHTML = html;
+            document.getElementById('result').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
