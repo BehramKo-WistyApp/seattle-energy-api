@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Field, validator
 from typing import Optional, Dict, Any
+from datetime import datetime 
 
 # ============================================
 # 1. SCHÉMA D'ENTRÉE SIMPLIFIÉ
@@ -14,6 +15,18 @@ class BuildingInput(BaseModel):
     Input simplifié pour l'utilisateur.
     On demande seulement les infos essentielles.
     """
+    
+    @validator('YearBuilt')
+    def validate_year(cls, v):
+        current_year = datetime.now().year
+        
+        if v > current_year:
+            raise ValueError(f'YearBuilt ne peut pas être dans le futur (max: {current_year})')
+        
+        if v < 1800:
+            raise ValueError('YearBuilt doit être >= 1800')
+        
+        return v
 
     # Caractéristiques de base
     PropertyGFATotal: float = Field(..., gt=10000, lt=10000000,
@@ -161,7 +174,12 @@ class EnergyPredictionService:
         """Calcule toutes les features dérivées"""
 
         # Temporel
-        building_age = 2016 - data['YearBuilt']
+        current_year = datetime.now().year
+        building_age = current_year - data['YearBuilt']
+    
+        # Validation : âge ne peut pas être négatif
+        if building_age < 0:
+                building_age = 0  # Bâtiment pas encore construit = 0 ans
 
         # Localisation
         seattle_center_lat = 47.6062
@@ -254,6 +272,6 @@ class EnergyPredictionService:
         elif distance <= 5: return "Proche"
         else: return "Périphérie"
 
-print("✅ Service corrigé créé : service_complete.py")
+print(" Service corrigé créé : service_complete.py")
 
 
